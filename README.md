@@ -30,9 +30,19 @@ Chainpoint valid receipt from [https://github.com/chainpoint/chainpoint-validate
 ```
 Run conversion tool to generate receipt.ots
 ```
-node index.js --chainpoint receipt.json --output receipt.ots
+$ node index.js --chainpoint examples/chainpoint.json --output receipt.ots
 ```
 OpenTimestamp proof receipt.ots
 ```
-ots info receipt.ots
+$ ots info receipt.ots
+File sha256 hash: bdf8c9bdf076d6aff0292a1c9448691d2ae283f2ce41b045355e2c8cb8e85ef2
+Timestamp:
+prepend bdf8c9bdf076d6aff0292a1c9448691d2ae283f2ce41b045355e2c8cb8e85ef2
+sha256
+prepend cb0dbbedb5ec5363e39be9fc43f56f321e1572cfcf304d26fc67cb6ea2e49faf
+sha256
+append cb0dbbedb5ec5363e39be9fc43f56f321e1572cfcf304d26fc67cb6ea2e49faf
+sha256
+verify BitcoinBlockHeaderAttestation(421439)
+# Bitcoin block merkle root 7a1a5866e91aaaa63d950bdbacd88f05735c935bb8ab46c5bcdd48ea68642951
 ```

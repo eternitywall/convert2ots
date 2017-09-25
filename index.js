@@ -18,6 +18,7 @@ const Timestamp = OpenTimestamps.Timestamp;
 const Ops = OpenTimestamps.Ops;
 const Utils = OpenTimestamps.Utils;
 const Notary = OpenTimestamps.Notary;
+const Context = OpenTimestamps.Context;
 const DetachedTimestampFile = OpenTimestamps.DetachedTimestampFile;
 
 // Local dependecies
@@ -27,55 +28,48 @@ const Tools = require('./tools.js');
 // Constants
 const path = process.argv[1].split('/');
 const title = path[path.length - 1];
-let isExecuted = false;
+
 
 // Parse parameters
-
 program
     .version(require('./package.json').version)
-    .option('-i --input <file>', 'Pizza size', /^(large|medium|small)$/i, 'medium')
-    .option('-o --output <file>', 'Drink', /^(coke|pepsi|izze)$/i)
+    .description('Convert bitcoin timestamp proof ( like Chainpoint v2 ) to OpenTimestamps proof.')
+    .option('-c, --chainpoint <file>', 'Chainpoint proof')
+    .option('-o, --output <file>', 'Output OTS proof')
     .parse(process.argv);
-const infoCommand = program
-    .command('info [file_ots]')
-    .alias('i')
-    .option('-v, --verbose', 'Be more verbose.')
-    .description('Show information on a timestamp.')
-    .action((file, options) => {
-    isExecuted = true;
-if (!file) {
-    console.log(infoCommand.helpInformation());
+
+const chainpointFile = program.chainpoint;
+const otsFile = program.output;
+if(chainpointFile == undefined || otsFile == undefined){
+    program.help();
     return;
 }
-info(file, options);
-});
+const chainpoint = JSON.parse(fs.readFileSync(chainpointFile, 'utf8'));
 
-
-// Check file
-if (validReceipt["@context"] !== "https://w3id.org/chainpoint/v2"){
+// Check chainpoint file
+if (chainpoint["@context"] !== "https://w3id.org/chainpoint/v2"){
     console.error("Support only chainpoint v2");
     return;
 }
-if (validReceipt["type"] !== "ChainpointSHA256v2"){
+if (chainpoint["type"] !== "ChainpointSHA256v2"){
     console.error("Support only ChainpointSHA256v2");
     return;
 }
-if (validReceipt["anchors"] === undefined){
+if (chainpoint["anchors"] === undefined){
     console.error("Support only timestamps with attestations");
     return;
 }
 
-
-// Check valid parsing
-var merkleRoot = calculateMerkleRoot(validReceipt.targetHash,validReceipt.proof);
-if (merkleRoot !== validReceipt.merkleRoot){
+// Check valid chainpoint merkle
+var merkleRoot = calculateMerkleRoot(chainpoint.targetHash,chainpoint.proof);
+if (merkleRoot !== chainpoint.merkleRoot){
     console.error("Invalid merkle root");
     return;
 }
 
 // Migrate proof
 try {
-    var timestamp = migration(validReceipt.targetHash, validReceipt.proof);
+    var timestamp = migration(chainpoint.targetHash, chainpoint.proof);
     console.log(timestamp.strTree(0, 1));
 }catch (err){
     console.log("Building error");
@@ -83,13 +77,19 @@ try {
 }
 
 // Migrate attestation
-validReceipt.anchors.forEach(function (anchor) {
+chainpoint.anchors.forEach(function (anchor) {
     var attestation = undefined;
     if(anchor.type === "BTCOpReturn"){
         getBlockHeight(anchor.sourceId).then((height)=>{
             attestation = new Notary.BitcoinBlockHeaderAttestation(height);
             addAttestation(timestamp, attestation);
+
+            // Print timestamp
             console.log(timestamp.strTree(0,1));
+
+            // Store to file
+            saveTimestamp(otsFile, timestamp);
+
         }).catch((err)=>{
             console.log("Attestation error");
         })
@@ -105,8 +105,8 @@ function migration(targetHash, proof){
     var tip = timestamp;
 
     for (var i = 0; i < proof.length; i++) {
-        item = proof[i];
-        op = undefined;
+        var item = proof[i];
+        var op = undefined;
         if(item.left !== undefined){
             op = new Ops.OpPrepend(Utils.hexToBytes(item.left));
         } else if(item.right !== undefined){
@@ -157,7 +157,7 @@ function calculateMerkleRoot(targetHash, proof){
     var prev = targetHash;
 
     for (var i = 0; i < proof.length; i++) {
-        item = proof[i];
+        var item = proof[i];
         if(item.left !== undefined){
             left = item.left;
             right = prev;
@@ -169,4 +169,27 @@ function calculateMerkleRoot(targetHash, proof){
         prev = result;
     };
     return prev;
+}
+
+// Save ots file
+function saveTimestamp(filename, timestamp){
+    const detached = new DetachedTimestampFile(new Ops.OpSHA256(), timestamp);
+    const ctx = new Context.StreamSerialization();
+    detached.serialize(ctx);
+    saveOts(filename, ctx.getOutput());
+}
+
+function saveOts(otsFilename, buffer) {
+    fs.exists(otsFilename, fileExist => {
+        if (fileExist) {
+            console.log('The timestamp proof \'' + otsFilename + '\' already exists');
+        } else {
+            fs.writeFile(otsFilename, buffer, 'binary', err => {
+            if (err) {
+                return console.log(err);
+            }
+            console.log('The timestamp proof \'' + otsFilename + '\' has been created!');
+});
+}
+});
 }
