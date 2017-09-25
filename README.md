@@ -1,5 +1,5 @@
 ## convert2ots
-Convert bitcoin proof ( like Chainpoint v2 ) to OpenTimestamps proof.
+Convert bitcoin timestamp proof ( like Chainpoint v2 ) to OpenTimestamps proof.
 
 #### Example
 Chainpoint valid receipt from [https://github.com/chainpoint/chainpoint-validate-js](https://github.com/chainpoint/chainpoint-validate-js) and save to receipt.json
@@ -34,5 +34,5 @@ node index.js --chainpoint receipt.json --output receipt.ots
 ```
 OpenTimestamp proof receipt.ots
 ```
-
+ots info receipt.ots
 ```
