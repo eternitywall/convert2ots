@@ -1,34 +1,29 @@
+#!/usr/bin/env node
 'use strict';
 
 /**
- * convert2ots
+ * Convert2ots
  * @module Index
  * @author EternityWall
  * @license LPGL3
  */
 
-const crypto = require('crypto');
-const OpenTimestamps = require('javascript-opentimestamps');
-const request = require('request-promise');
+// Dependencies
 const fs = require('fs');
+const OpenTimestamps = require('javascript-opentimestamps');
+// Comment : const request = require('request-promise');
 const program = require('commander');
 
 // OpenTimestamps shortcuts
-const Timestamp = OpenTimestamps.Timestamp;
+// const Timestamp = OpenTimestamps.Timestamp;
 const Ops = OpenTimestamps.Ops;
-const Utils = OpenTimestamps.Utils;
-const Notary = OpenTimestamps.Notary;
+// Const Utils = OpenTimestamps.Utils;
+// const Notary = OpenTimestamps.Notary;
 const Context = OpenTimestamps.Context;
 const DetachedTimestampFile = OpenTimestamps.DetachedTimestampFile;
 
 // Local dependecies
 const Tools = require('./tools.js');
-
-
-// Constants
-const path = process.argv[1].split('/');
-const title = path[path.length - 1];
-
 
 // Parse parameters
 program
@@ -40,168 +35,85 @@ program
 
 const chainpointFile = program.chainpoint;
 const otsFile = program.output;
-if(chainpointFile == undefined || otsFile == undefined){
-    program.help();
-    return;
+if (chainpointFile === undefined || otsFile === undefined) {
+  program.help();
+  process.exit(1);
 }
-const chainpoint = JSON.parse(fs.readFileSync(chainpointFile, 'utf8'));
+
+// Read file
+let chainpoint;
+try {
+  chainpoint = JSON.parse(fs.readFileSync(chainpointFile, 'utf8'));
+} catch (err) {
+  console.log('Read file error');
+  process.exit(1);
+}
 
 // Check chainpoint file
-if (chainpoint["@context"] !== "https://w3id.org/chainpoint/v2"){
-    console.error("Support only chainpoint v2");
-    return;
+if (chainpoint['@context'] !== 'https://w3id.org/chainpoint/v2') {
+  console.error('Support only chainpoint v2');
+  process.exit(1);
 }
-if (chainpoint["type"] !== "ChainpointSHA256v2"){
-    console.error("Support only ChainpointSHA256v2");
-    return;
+if (chainpoint.type !== 'ChainpointSHA256v2') {
+  console.error('Support only ChainpointSHA256v2');
+  process.exit(1);
 }
-if (chainpoint["anchors"] === undefined){
-    console.error("Support only timestamps with attestations");
-    return;
+if (chainpoint.anchors === undefined) {
+  console.error('Support only timestamps with attestations');
+  process.exit(1);
 }
 
 // Check valid chainpoint merkle
-var merkleRoot = calculateMerkleRoot(chainpoint.targetHash,chainpoint.proof);
-if (merkleRoot !== chainpoint.merkleRoot){
-    console.error("Invalid merkle root");
-    return;
+const merkleRoot = Tools.calculateMerkleRoot(chainpoint.targetHash, chainpoint.proof);
+if (merkleRoot !== chainpoint.merkleRoot) {
+  console.error('Invalid merkle root');
+  process.exit(1);
 }
 
 // Migrate proof
+let timestamp;
 try {
-    var timestamp = migration(chainpoint.targetHash, chainpoint.proof);
-    console.log(timestamp.strTree(0, 1));
-}catch (err){
-    console.log("Building error");
-    return;
+  timestamp = Tools.migrationMerkle(chainpoint.targetHash, chainpoint.proof);
+  // Console.log(timestamp.strTree(0, 1));
+} catch (err) {
+  console.log('Building error');
+  process.exit(1);
 }
 
 // Migrate attestation
-chainpoint.anchors.forEach(function (anchor) {
-    var attestation = undefined;
-    if(anchor.type === "BTCOpReturn"){
-
-        const tag = [0x68, 0x7f, 0xe3, 0xfe, 0x79, 0x5e, 0x9a, 0x0d];
-        attestation = new Notary.UnknownAttestation(tag, Tools.hexToBytes(anchor.sourceId));
-        addAttestation(timestamp, attestation);
-
-        // Print timestamp
-        console.log(timestamp.strTree(0,1));
-
-        // Store to file
-        saveTimestamp(otsFile, timestamp);
-
-        /*getBlockHeight(anchor.sourceId).then((height)=>{
-            const tag = [0x05, 0x88, 0x96, 0x0d, 0x73, 0xd7, 0x19, 0x01];
-            attestation = new Notary.UnknownAttestation(tag,height);
-            addAttestation(timestamp, attestation);
-
-            // Print timestamp
-            console.log(timestamp.strTree(0,1));
-
-            // Store to file
-            saveTimestamp(otsFile, timestamp);
-
-        }).catch((err)=>{
-            console.log("Attestation error");
-        })*/
-    }
-})
-
-
-// Migrate proofs
-function migration(targetHash, proof){
-    var prev = targetHash;
-
-    var timestamp = new Timestamp(Utils.hexToBytes(targetHash));
-    var tip = timestamp;
-
-    for (var i = 0; i < proof.length; i++) {
-        var item = proof[i];
-        var op = undefined;
-        if(item.left !== undefined){
-            op = new Ops.OpPrepend(Utils.hexToBytes(item.left));
-        } else if(item.right !== undefined){
-            op = new Ops.OpAppend(Utils.hexToBytes(item.right));
-        }
-        timestamp = timestamp.add(op);
-        const opSHA256 = new Ops.OpSHA256();
-        timestamp = timestamp.add(opSHA256);
-
-    };
-    return tip;
+try {
+  Tools.migrationAttestations(chainpoint.anchors, timestamp);
+    // Console.log(timestamp.strTree(0, 1));
+} catch (err) {
+  console.log('Attestation error');
+  process.exit(1);
 }
 
-// Add OTS attestation
-function addAttestation(timestamp, attestation){
-    if(timestamp.ops.size == 0){
-        timestamp.attestations.push(attestation);
-        return true;
-    }
+// Print timestamp
+console.log(timestamp.strTree(0, 1));
 
-    timestamp.ops.forEach((stamp, op) => {
-        addAttestation(stamp, attestation);
-    })
-}
-
-// Get block height from transaction
-async function getBlockHeight(txid) {
-    const url = 'https://search.bitaccess.co/insight-api/tx/' + txid;
-    const options = {
-        method: 'GET',
-        json: true,
-        uri: url
-    };
-    try {
-        const response = await
-        request(options);
-        return Promise.resolve(response.blockheight);
-    }
-    catch (error) {
-        Promise.reject(error);
-    }
-}
-
-// Proof functions
-function calculateMerkleRoot(targetHash, proof){
-    var left = undefined;
-    var right = undefined;
-    var prev = targetHash;
-
-    for (var i = 0; i < proof.length; i++) {
-        var item = proof[i];
-        if(item.left !== undefined){
-            left = item.left;
-            right = prev;
-        } else if(item.right !== undefined){
-            left = prev;
-            right = item.right;
-        }
-        var result = crypto.createHash('sha256').update(Tools.hexToString(left)).update(Tools.hexToString(right)).digest('hex');
-        prev = result;
-    };
-    return prev;
-}
+// Store to file
+saveTimestamp(otsFile, timestamp);
 
 // Save ots file
-function saveTimestamp(filename, timestamp){
-    const detached = new DetachedTimestampFile(new Ops.OpSHA256(), timestamp);
-    const ctx = new Context.StreamSerialization();
-    detached.serialize(ctx);
-    saveOts(filename, ctx.getOutput());
+function saveTimestamp(filename, timestamp) {
+  const detached = new DetachedTimestampFile(new Ops.OpSHA256(), timestamp);
+  const ctx = new Context.StreamSerialization();
+  detached.serialize(ctx);
+  saveOts(filename, ctx.getOutput());
 }
 
 function saveOts(otsFilename, buffer) {
-    fs.exists(otsFilename, fileExist => {
-        if (fileExist) {
-            console.log('The timestamp proof \'' + otsFilename + '\' already exists');
-        } else {
-            fs.writeFile(otsFilename, buffer, 'binary', err => {
-            if (err) {
-                return console.log(err);
-            }
-            console.log('The timestamp proof \'' + otsFilename + '\' has been created!');
-});
-}
-});
+  fs.exists(otsFilename, fileExist => {
+    if (fileExist) {
+      console.log('The timestamp proof \'' + otsFilename + '\' already exists');
+    } else {
+      fs.writeFile(otsFilename, buffer, 'binary', err => {
+        if (err) {
+          return console.log(err);
+        }
+        console.log('The timestamp proof \'' + otsFilename + '\' has been created!');
+      });
+    }
+  });
 }
