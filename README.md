@@ -32,7 +32,7 @@ Run conversion tool to generate receipt.ots
 ```
 $ node index.js --chainpoint examples/chainpoint.json --output receipt.ots
 ```
-OpenTimestamp proof receipt.ots
+OpenTimestamp proof receipt.ots (BitcoinTransactionAttestation is still unsupported)
 ```
 $ ots info receipt.ots
 File sha256 hash: bdf8c9bdf076d6aff0292a1c9448691d2ae283f2ce41b045355e2c8cb8e85ef2
@@ -43,6 +43,5 @@ prepend cb0dbbedb5ec5363e39be9fc43f56f321e1572cfcf304d26fc67cb6ea2e49faf
 sha256
 append cb0dbbedb5ec5363e39be9fc43f56f321e1572cfcf304d26fc67cb6ea2e49faf
 sha256
-verify BitcoinBlockHeaderAttestation(421439)
-# Bitcoin block merkle root 7a1a5866e91aaaa63d950bdbacd88f05735c935bb8ab46c5bcdd48ea68642951
+verify BitcoinTransactionAttestation(f3be82fe1b5d8f18e009cb9a491781289d2e01678311fe2b2e4e84381aafadee)
 ```
