@@ -80,8 +80,20 @@ try {
 chainpoint.anchors.forEach(function (anchor) {
     var attestation = undefined;
     if(anchor.type === "BTCOpReturn"){
-        getBlockHeight(anchor.sourceId).then((height)=>{
-            attestation = new Notary.BitcoinBlockHeaderAttestation(height);
+
+        const tag = [0x68, 0x7f, 0xe3, 0xfe, 0x79, 0x5e, 0x9a, 0x0d];
+        attestation = new Notary.UnknownAttestation(tag, Tools.hexToBytes(anchor.sourceId));
+        addAttestation(timestamp, attestation);
+
+        // Print timestamp
+        console.log(timestamp.strTree(0,1));
+
+        // Store to file
+        saveTimestamp(otsFile, timestamp);
+
+        /*getBlockHeight(anchor.sourceId).then((height)=>{
+            const tag = [0x05, 0x88, 0x96, 0x0d, 0x73, 0xd7, 0x19, 0x01];
+            attestation = new Notary.UnknownAttestation(tag,height);
             addAttestation(timestamp, attestation);
 
             // Print timestamp
@@ -92,7 +104,7 @@ chainpoint.anchors.forEach(function (anchor) {
 
         }).catch((err)=>{
             console.log("Attestation error");
-        })
+        })*/
     }
 })
 
