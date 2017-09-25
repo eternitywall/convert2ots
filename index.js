@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * chainpoint2ots.
+ * convert2ots
  * @module Index
  * @author EternityWall
  * @license LPGL3
@@ -32,8 +32,10 @@ let isExecuted = false;
 // Parse parameters
 
 program
-    .version(require('./package.json').version);
-
+    .version(require('./package.json').version)
+    .option('-i --input <file>', 'Pizza size', /^(large|medium|small)$/i, 'medium')
+    .option('-o --output <file>', 'Drink', /^(coke|pepsi|izze)$/i)
+    .parse(process.argv);
 const infoCommand = program
     .command('info [file_ots]')
     .alias('i')
