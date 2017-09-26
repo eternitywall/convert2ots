@@ -14,8 +14,7 @@
     "fs": "0.0.1-security",
     "http": "0.0.0",
     "javascript-opentimestamps": "^0.2.3",
-    "request-promise": "^4.2.2",
-    "tape": "^4.8.0"
+    "request-promise": "^4.2.2"
   },
   "xo": {
     "esnext": true,
@@ -31,5 +30,9 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/eternitywall/convert2ots.git"
+  },
+  "devDependencies": {
+    "tap": "^10.7.2",
+    "tape": "^4.8.0"
   }
 }
