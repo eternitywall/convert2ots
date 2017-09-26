@@ -1,4 +1,4 @@
-## convert2ots
+## convert2ots [![Build Status](https://travis-ci.org/eternitywall/convert2ots.svg?branch=master)](https://travis-ci.org/eternitywall/convert2ots)
 Convert bitcoin timestamp proof ( like Chainpoint v2 ) to OpenTimestamps proof.
 
 #### Example
