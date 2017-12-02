@@ -18,12 +18,12 @@ const program = require('commander');
 // const Timestamp = OpenTimestamps.Timestamp;
 const Ops = OpenTimestamps.Ops;
 // Const Utils = OpenTimestamps.Utils;
-// const Notary = OpenTimestamps.Notary;
+// Const Notary = OpenTimestamps.Notary;
 const Context = OpenTimestamps.Context;
 const DetachedTimestampFile = OpenTimestamps.DetachedTimestampFile;
 
 // Local dependecies
-const Tools = require('./tools.js');
+const ConvertOTS = require('./libconvert.js');
 
 // Parse parameters
 program
@@ -64,7 +64,7 @@ if (chainpoint.anchors === undefined) {
 }
 
 // Check valid chainpoint merkle
-const merkleRoot = Tools.calculateMerkleRoot(chainpoint.targetHash, chainpoint.proof);
+const merkleRoot = ConvertOTS.calculateMerkleRoot(chainpoint.targetHash, chainpoint.proof);
 if (merkleRoot !== chainpoint.merkleRoot) {
   console.error('Invalid merkle root');
   process.exit(1);
@@ -73,7 +73,7 @@ if (merkleRoot !== chainpoint.merkleRoot) {
 // Migrate proof
 let timestamp;
 try {
-  timestamp = Tools.migrationMerkle(chainpoint.targetHash, chainpoint.proof);
+  timestamp = ConvertOTS.migrationMerkle(chainpoint.targetHash, chainpoint.proof);
   // Console.log(timestamp.strTree(0, 1));
 } catch (err) {
   console.log('Building error');
@@ -82,18 +82,35 @@ try {
 
 // Migrate attestation
 try {
-  Tools.migrationAttestations(chainpoint.anchors, timestamp);
+  ConvertOTS.migrationAttestations(chainpoint.anchors, timestamp);
     // Console.log(timestamp.strTree(0, 1));
 } catch (err) {
   console.log('Attestation error');
   process.exit(1);
 }
 
-// Print timestamp
-console.log(timestamp.strTree(0, 1));
+// Resolve attestations
+const promises = [];
+const stampsAttestations = timestamp.directlyVerified();
+stampsAttestations.forEach(subStamp => {
+  subStamp.attestations.forEach(attestation => {
+    const txHash = ConvertOTS.bytesToHex(attestation.payload);
+    promises.push(ConvertOTS.resolveAttestation(txHash, subStamp));
+  });
+});
 
-// Store to file
-saveTimestamp(otsFile, timestamp);
+Promise.all(promises.map(ConvertOTS.hardFail))
+    .then(() => {
+        // Print timestamp
+      console.log(timestamp.strTree(0, 1));
+
+        // Store to file
+      saveTimestamp(otsFile, timestamp);
+    })
+    .catch(err => {
+      console.log('Resolve attestation error: ' + err);
+      process.exit(1);
+    });
 
 // Save ots file
 function saveTimestamp(filename, timestamp) {
