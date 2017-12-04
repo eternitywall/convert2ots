@@ -100,8 +100,7 @@ exports.migrationAttestations = function (anchors, timestamp) {
 exports.resolveAttestation = function (txHash, timestamp) {
   const self = this;
   return new Promise((resolve, reject) => {
-    const url = 'https://search.bitaccess.co/insight-api';
-    const insight = new Insight.Insight(url);
+    const insight = new Insight.MultiInsight();
     insight
             .rawtx(txHash)
             .then(rawtx => {
@@ -292,5 +291,13 @@ exports.hardFail = function (promise) {
     promise
             .then(resolve)
             .catch(reject);
+  });
+};
+
+exports.softFail = function (promise) {
+  return new Promise(resolve => {
+    promise
+            .then(resolve)
+            .catch(resolve);
   });
 };

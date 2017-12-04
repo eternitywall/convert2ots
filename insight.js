@@ -9,6 +9,7 @@
 
 const requestPromise = require('request-promise');
 const Promise = require('promise');
+const ConvertOTS = require('./libconvert.js');
 
 /** Class used to query Insight API */
 class Insight {
@@ -182,8 +183,8 @@ class Insight {
     });
   }
 }
-/*
-Const urls = [
+
+const urls = [
   'https://www.localbitcoinschain.com/api',
   'https://search.bitaccess.co/insight-api',
   'https://insight.bitpay.com/api',
@@ -192,7 +193,7 @@ Const urls = [
   'https://blockexplorer.com/api'
 ];
 
-Class MultiInsight {
+class MultiInsight {
 
   constructor() {
     this.insights = [];
@@ -207,7 +208,7 @@ Class MultiInsight {
       res.push(insight.blockhash(height));
     });
     return new Promise((resolve, reject) => {
-      Promise.all(res.map(Utils.softFail)).then(results => {
+      Promise.all(res.map(ConvertOTS.softFail)).then(results => {
         // Console.log('results=' + results);
         const set = new Set();
         let found = false;
@@ -234,7 +235,7 @@ Class MultiInsight {
       res.push(insight.block(hash));
     });
     return new Promise((resolve, reject) => {
-      Promise.all(res.map(Utils.softFail)).then(results => {
+      Promise.all(res.map(ConvertOTS.softFail)).then(results => {
         // Console.log('results=' + results);
         const resultSet = new Set();
         let found = false;
@@ -255,8 +256,62 @@ Class MultiInsight {
     });
   }
 
+  tx(hash) {
+    const res = [];
+    this.insights.forEach(insight => {
+      res.push(insight.tx(hash));
+    });
+    return new Promise((resolve, reject) => {
+      Promise.all(res.map(ConvertOTS.softFail)).then(results => {
+                // Console.log('results=' + results);
+        const resultSet = new Set();
+        let found = false;
+        results.forEach(result => {
+          if (result !== undefined && !found) {
+            if (resultSet.has(JSON.stringify(result))) {
+                            // Return if two results are equal
+              resolve(result);
+              found = true;
+            }
+            resultSet.add(JSON.stringify(result));
+          }
+        });
+        if (!found) {
+          reject();
+        }
+      });
+    });
+  }
+
+  rawtx(hash) {
+    const res = [];
+    this.insights.forEach(insight => {
+      res.push(insight.rawtx(hash));
+    });
+    return new Promise((resolve, reject) => {
+      Promise.all(res.map(ConvertOTS.softFail)).then(results => {
+                // Console.log('results=' + results);
+        const resultSet = new Set();
+        let found = false;
+        results.forEach(result => {
+          if (result !== undefined && !found) {
+            if (resultSet.has(JSON.stringify(result))) {
+                            // Return if two results are equal
+              resolve(result);
+              found = true;
+            }
+            resultSet.add(JSON.stringify(result));
+          }
+        });
+        if (!found) {
+          reject();
+        }
+      });
+    });
+  }
+
 }
-*/
+
 module.exports = {
-  Insight
+  Insight, MultiInsight
 };
