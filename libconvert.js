@@ -150,7 +150,7 @@ exports.resolveAttestation = function (txHash, timestamp) {
                 // Check chainpoint anchor to merge
               digests.forEach(digest => {
                 if (self.arrEq(digest.timestamp.msg, self.hexToBytes(txHash).reverse())) {
-                  timestamp.attestations = []; // remove unknown attestation
+                  timestamp.attestations = []; // Remove unknown attestation
                   let subStamp = timestamp.ops.values().next().value;
                   subStamp = subStamp.ops.values().next().value;
                   subStamp = subStamp.ops.values().next().value;

@@ -110,15 +110,7 @@ test('merkle root of block', assert => {
     assert.true(merkleTip !== undefined);
 
     const merkleRoot = Utils.hexToBytes(block.merkleroot).reverse();
-
-    //console.error(Utils.bytesToHex(merkleTip.msg) + '===' + Utils.bytesToHex(merkleRoot));
     assert.true(ConvertOTS.arrEq(merkleTip.msg, merkleRoot));
-
-    /*merkleRoots.forEach(stamp => {
-      console.error('STAMP: ' + Utils.bytesToHex(stamp.msg));
-      console.error(stamp.strTree(0, true));
-    });*/
-
     assert.end();
   });
 });
