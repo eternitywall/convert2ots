@@ -113,8 +113,8 @@ exports.resolveAttestation = function (txHash, timestamp) {
               const append = Utils.hexToBytes(rawtx.substring(0, pos));
               const prepend = Utils.hexToBytes(rawtx.substring(pos + txHash.length, rawtx.length));
 
-              let subStamp = timestamp.add(new Ops.OpAppend(append));
-              subStamp = subStamp.add(new Ops.OpPrepend(prepend));
+              let subStamp = timestamp.add(new Ops.OpPrepend(append));
+              subStamp = subStamp.add(new Ops.OpAppend(prepend));
               subStamp = subStamp.add(new Ops.OpSHA256());
               subStamp.add(new Ops.OpSHA256());
 
