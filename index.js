@@ -63,6 +63,10 @@ if (chainpoint.anchors === undefined) {
   process.exit(1);
 }
 
+// Output information
+console.log('File type: ' + chainpoint.type);
+console.log('Target hash: ' + chainpoint.targetHash);
+
 // Check valid chainpoint merkle
 const merkleRoot = ConvertOTS.calculateMerkleRoot(chainpoint.targetHash, chainpoint.proof);
 if (merkleRoot !== chainpoint.merkleRoot) {
@@ -89,11 +93,12 @@ try {
   process.exit(1);
 }
 
-// Resolve attestations
+// Resolve unknown attestations
 const promises = [];
 const stampsAttestations = timestamp.directlyVerified();
 stampsAttestations.forEach(subStamp => {
   subStamp.attestations.forEach(attestation => {
+    // Console.log('Find op_return: ' + ConvertOTS.bytesToHex(attestation.payload));
     const txHash = ConvertOTS.bytesToHex(attestation.payload);
     promises.push(ConvertOTS.resolveAttestation(txHash, subStamp));
   });
@@ -101,10 +106,13 @@ stampsAttestations.forEach(subStamp => {
 
 Promise.all(promises.map(ConvertOTS.hardFail))
     .then(() => {
-        // Print timestamp
-      console.log(timestamp.strTree(0, 1));
+      // Print attestations
+      const attestations = timestamp.getAttestations();
+      attestations.forEach(attestation => {
+        console.log('OTS attestation: ' + attestation.toString());
+      });
 
-        // Store to file
+      // Store to file
       saveTimestamp(otsFile, timestamp);
     })
     .catch(err => {
