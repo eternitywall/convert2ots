@@ -14,7 +14,9 @@
     "fs": "0.0.1-security",
     "http": "0.0.0",
     "javascript-opentimestamps": "^0.2.3",
-    "request-promise": "^4.2.2"
+    "promise": "^8.0.1",
+    "request-promise": "^4.2.2",
+    "sleep": "^5.1.1"
   },
   "xo": {
     "esnext": true,
@@ -23,6 +25,9 @@
       "new-cap": 0,
       "no-process-exit": 0
     }
+  },
+  "scripts": {
+    "test": "tap test.js && xo *.js"
   },
   "bin": {
     "index.js": "./index.js"
