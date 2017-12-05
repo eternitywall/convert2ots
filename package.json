@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "tap test.js && xo"
+    "test": "tap test.js && xo *.js"
   },
   "author": "Eternity Wall",
   "license": "MIT",
@@ -15,6 +15,7 @@
     "http": "0.0.0",
     "javascript-opentimestamps": "^0.2.3",
     "promise": "^8.0.1",
+    "properties": "^1.2.1",
     "request-promise": "^4.2.2",
     "sleep": "^5.1.1"
   },
@@ -25,9 +26,6 @@
       "new-cap": 0,
       "no-process-exit": 0
     }
-  },
-  "scripts": {
-    "test": "tap test.js && xo *.js"
   },
   "bin": {
     "index.js": "./index.js"

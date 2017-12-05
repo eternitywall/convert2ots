@@ -6,11 +6,12 @@ const test = require('tape');
 const OpenTimestamps = require('javascript-opentimestamps');
 const ConvertOTS = require('./libconvert.js');
 const Insight = require('./insight.js');
+const Tools = require('./tools.js');
 
 // OpenTimestamps shortcuts
 // const Timestamp = OpenTimestamps.Timestamp;
 const Ops = OpenTimestamps.Ops;
-const Utils = OpenTimestamps.Utils;
+// Const Utils = OpenTimestamps.Utils;
 // Const Notary = OpenTimestamps.Notary;
 
 const url = 'examples/chainpoint.json';
@@ -26,16 +27,16 @@ test('test validation merkle tree', assert => {
     // console.log("right1: " + right1);
 
   const left2 = 'cb0dbbedb5ec5363e39be9fc43f56f321e1572cfcf304d26fc67cb6ea2e49faf';
-  const right2 = crypto.createHash('sha256').update(ConvertOTS.hexToString(left1)).update(ConvertOTS.hexToString(right1)).digest('hex');
+  const right2 = crypto.createHash('sha256').update(Tools.hexToString(left1)).update(Tools.hexToString(right1)).digest('hex');
     // Console.log("left2: " + left2);
     // console.log("right2: " + right2);
 
   const right3 = 'cb0dbbedb5ec5363e39be9fc43f56f321e1572cfcf304d26fc67cb6ea2e49faf';
-  const left3 = crypto.createHash('sha256').update(ConvertOTS.hexToString(left2)).update(ConvertOTS.hexToString(right2)).digest('hex');
+  const left3 = crypto.createHash('sha256').update(Tools.hexToString(left2)).update(Tools.hexToString(right2)).digest('hex');
     // Console.log("right3: " + right3);
     // console.log("left3: " + left3);
 
-  const top = crypto.createHash('sha256').update(ConvertOTS.hexToString(left3)).update(ConvertOTS.hexToString(right3)).digest('hex');
+  const top = crypto.createHash('sha256').update(Tools.hexToString(left3)).update(Tools.hexToString(right3)).digest('hex');
     // Console.log("top: " + top);
     // console.log("merkleRoot: " + merkleRoot);
 
@@ -53,17 +54,17 @@ test('test migration', assert => {
 
   const timestamp = ConvertOTS.migrationMerkle(chainpoint.targetHash, chainpoint.proof);
   assert.true(timestamp !== undefined);
-  assert.true(ConvertOTS.arrEq(timestamp.msg, ConvertOTS.hexToBytes(chainpoint.targetHash)));
+  assert.true(Tools.arrEq(timestamp.msg, Tools.hexToBytes(chainpoint.targetHash)));
 
   assert.end();
 });
 
 test('merkle root', assert => {
   const txs = [];
-  txs.push(ConvertOTS.hexToBytes('8506933d3bad1aaefb3c835d90912c1896349c7a94e9b576941ce4a52d47c8ca'));
-  txs.push(ConvertOTS.hexToBytes('9d7847a90e5957fa87e1aca27e88dc3e4da3b1cd71a9e0c812ca6a205c634829'));
+  txs.push(Tools.hexToBytes('8506933d3bad1aaefb3c835d90912c1896349c7a94e9b576941ce4a52d47c8ca'));
+  txs.push(Tools.hexToBytes('9d7847a90e5957fa87e1aca27e88dc3e4da3b1cd71a9e0c812ca6a205c634829'));
 
-  const merkleroot = ConvertOTS.hexToBytes('6cfb0e7f8fadebd617c711618dfc4b25bea286d323df98d7c152699d177f1ff6');
+  const merkleroot = Tools.hexToBytes('6cfb0e7f8fadebd617c711618dfc4b25bea286d323df98d7c152699d177f1ff6');
 
   const digests = [];
   txs.forEach(tx => {
@@ -78,7 +79,7 @@ test('merkle root', assert => {
 
   const merkleTip = ConvertOTS.makeMerkleTree(merkleRoots);
   assert.true(merkleTip !== undefined);
-  assert.true(ConvertOTS.arrEq(merkleTip.msg, merkleroot.reverse()));
+  assert.true(Tools.arrEq(merkleTip.msg, merkleroot.reverse()));
 
   assert.end();
 });
@@ -100,7 +101,7 @@ test('merkle root of block', assert => {
     const digests = [];
     const merkleRoots = [];
     block.tx.forEach(hash => {
-      const bytes = ConvertOTS.hexToBytes(hash).reverse();
+      const bytes = Tools.hexToBytes(hash).reverse();
       const digest = OpenTimestamps.DetachedTimestampFile.fromHash(new Ops.OpSHA256(), bytes);
       merkleRoots.push(digest.timestamp);
       digests.push(digest);
@@ -110,8 +111,8 @@ test('merkle root of block', assert => {
     const merkleTip = ConvertOTS.makeMerkleTree(merkleRoots);
     assert.true(merkleTip !== undefined);
 
-    const merkleRoot = Utils.hexToBytes(block.merkleroot).reverse();
-    assert.true(ConvertOTS.arrEq(merkleTip.msg, merkleRoot));
+    const merkleRoot = Tools.hexToBytes(block.merkleroot).reverse();
+    assert.true(Tools.arrEq(merkleTip.msg, merkleRoot));
     assert.end();
   });
 });

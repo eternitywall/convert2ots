@@ -24,6 +24,7 @@ const DetachedTimestampFile = OpenTimestamps.DetachedTimestampFile;
 
 // Local dependecies
 const ConvertOTS = require('./libconvert.js');
+const Tools = require('./tools.js');
 
 // Parse parameters
 program
@@ -98,13 +99,13 @@ const promises = [];
 const stampsAttestations = timestamp.directlyVerified();
 stampsAttestations.forEach(subStamp => {
   subStamp.attestations.forEach(attestation => {
-    // Console.log('Find op_return: ' + ConvertOTS.bytesToHex(attestation.payload));
-    const txHash = ConvertOTS.bytesToHex(attestation.payload);
+    // Console.log('Find op_return: ' + Tools.bytesToHex(attestation.payload));
+    const txHash = Tools.bytesToHex(attestation.payload);
     promises.push(ConvertOTS.resolveAttestation(txHash, subStamp));
   });
 });
 
-Promise.all(promises.map(ConvertOTS.hardFail))
+Promise.all(promises.map(Tools.hardFail))
     .then(() => {
       // Print attestations
       const attestations = timestamp.getAttestations();
