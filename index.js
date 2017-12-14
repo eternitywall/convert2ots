@@ -32,7 +32,7 @@ program
     .description('Convert bitcoin timestamp proof ( like Chainpoint v2 ) to OpenTimestamps proof.')
     .option('-c, --chainpoint <file>', 'Chainpoint proof')
     .option('-o, --output <file>', 'Output OTS proof')
-    .option('-n, --no-bitcoin', 'Use lite-verification with insight block explorer instead local Bitcoin node')
+    .option('-n, --nobitcoin', 'Use lite-verification with insight block explorer instead local Bitcoin node')
     .parse(process.argv);
 
 const chainpointFile = program.chainpoint;
@@ -102,7 +102,7 @@ stampsAttestations.forEach(subStamp => {
   subStamp.attestations.forEach(attestation => {
     // Console.log('Find op_return: ' + Tools.bytesToHex(attestation.payload));
     const txHash = Tools.bytesToHex(attestation.payload);
-    promises.push(ConvertOTS.resolveAttestation(txHash, subStamp));
+    promises.push(ConvertOTS.resolveAttestation(txHash, subStamp, program.nobitcoin));
   });
 });
 

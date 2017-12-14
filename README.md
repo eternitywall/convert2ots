@@ -35,9 +35,9 @@ $ node index.js --chainpoint examples/chainpoint.json --output receipt.ots
 The default behaviour check and use the local Bitcoin node. 
 If it is not available or connection failure, 
 the lite-verification process use multi insight block explorer instead local Bitcoin node.
-To force to use lite-verification specify --no-bitcoin option.
+To force to use lite-verification specify --nobitcoin option.
 ```
-$ node index.js --chainpoint examples/chainpoint.json --output receipt.ots --no-bitcoin
+$ node index.js --chainpoint examples/chainpoint.json --output receipt.ots --nobitcoin
 ```
 OpenTimestamp proof info receipt.ots
 ```
