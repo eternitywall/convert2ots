@@ -12,6 +12,7 @@ const crypto = require('crypto');
 const OpenTimestamps = require('javascript-opentimestamps');
 const Insight = require('./insight.js');
 const Tools = require('./tools.js');
+const Bitcoin = require('./bitcoin.js');
 
 // OpenTimestamps shortcuts
 const Timestamp = OpenTimestamps.Timestamp;
@@ -77,26 +78,24 @@ exports.migrationAttestations = function (anchors, timestamp) {
       const tag = [0x68, 0x7F, 0xE3, 0xFE, 0x79, 0x5E, 0x9A, 0x0D];
       attestation = new Notary.UnknownAttestation(tag, Tools.hexToBytes(anchor.sourceId));
       self.addAttestation(timestamp, attestation);
-
-        /* GetBlockHeight(anchor.sourceId).then((height)=>{
-            const tag = [0x05, 0x88, 0x96, 0x0d, 0x73, 0xd7, 0x19, 0x01];
-            attestation = new Notary.UnknownAttestation(tag,height);
-            addAttestation(timestamp, attestation);
-
-            // Print timestamp
-            console.log(timestamp.strTree(0,1));
-
-            // Store to file
-            saveTimestamp(otsFile, timestamp);
-
-        }).catch((err)=>{
-            console.log("Attestation error");
-        }) */
     }
   })
     ;
 };
 
+// Bitcoin node verification
+exports.nodeVerify = function () {
+  return new Promise((resolve, reject) => {
+    Bitcoin.BitcoinNode.readBitcoinConf().then(properties => {
+      const bitcoin = new Bitcoin.BitcoinNode(properties);
+      resolve(bitcoin);
+    }).catch(err => {
+      reject(err);
+    });
+  });
+};
+
+// Lite verification with Insight
 exports.liteVerify = function () {
   return new Promise(resolve => {
     resolve(new Insight.MultiInsight());
@@ -104,11 +103,54 @@ exports.liteVerify = function () {
 };
 
 // Resolve attestation
-exports.resolveAttestation = function (txHash, timestamp) {
+exports.resolveAttestation = function (txHash, timestamp, noBitcoinNode) {
+  const self = this;
+  if (!noBitcoinNode) {
+    return new Promise((resolve, reject) => {
+      console.log('Bitcoin node verification');
+      this.nodeVerify().then(explorer => {
+        return self.verify(txHash, timestamp, explorer);
+      }).then(status => {
+        console.log('Bitcoin node verification success');
+        resolve(status);
+      }).catch(() => {
+        console.log('Bitcoin node verification failure: ');
+              // Reject('Bitcoin node verification failure: ');
+              // Fallback
+        this.liteVerify().then(explorer => {
+          console.log('Lite verification');
+          return self.verify(txHash, timestamp, explorer);
+        }).then(status => {
+          console.log('Lite verification success');
+          resolve(status);
+        }).catch(() => {
+          console.log('Lite verification failure: ');
+          reject(Error('Lite verification failure: '));
+        });
+      });
+    });
+  }
+
+  if (noBitcoinNode) {
+    return new Promise((resolve, reject) => {
+      console.log('Lite verification');
+      this.liteVerify().then(explorer => {
+        return self.verify(txHash, timestamp, explorer);
+      }).then(status => {
+        console.log('Lite verification success');
+        resolve(status);
+      }).catch(() => {
+        console.log('Lite verification failure: ');
+        reject(Error('Lite verification failure: '));
+      });
+    });
+  }
+};
+
+exports.verify = function (txHash, timestamp, explorer) {
   const self = this;
   return new Promise((resolve, reject) => {
-    self.liteVerify().then(explorer => {
-      explorer.rawtx(txHash)
+    explorer.rawtx(txHash)
             .then(rawtx => {
               const opReturn = Tools.bytesToHex(timestamp.msg);
               const pos = rawtx.indexOf(opReturn);
@@ -163,16 +205,11 @@ exports.resolveAttestation = function (txHash, timestamp) {
                   subStamp.ops = digest.timestamp.ops;
                 }
               });
-
               resolve();
             })
             .catch(err => {
               reject(err);
             });
-    })
-        .catch(err => {
-          reject(err);
-        });
   });
 };
 

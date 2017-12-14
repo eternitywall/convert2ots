@@ -32,6 +32,7 @@ program
     .description('Convert bitcoin timestamp proof ( like Chainpoint v2 ) to OpenTimestamps proof.')
     .option('-c, --chainpoint <file>', 'Chainpoint proof')
     .option('-o, --output <file>', 'Output OTS proof')
+    .option('-n, --no-bitcoin', 'Use lite-verification with insight block explorer instead local Bitcoin node')
     .parse(process.argv);
 
 const chainpointFile = program.chainpoint;
