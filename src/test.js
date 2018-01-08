@@ -4,7 +4,7 @@ const fs = require('fs');
 const crypto = require('crypto');
 const test = require('tape');
 const OpenTimestamps = require('javascript-opentimestamps');
-const ConvertOTS = require('./libconvert.js');
+const ConvertOTS = require('./convert2ots.js');
 const Insight = require('./insight.js');
 const Tools = require('./tools.js');
 

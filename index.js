@@ -23,7 +23,7 @@ const Context = OpenTimestamps.Context;
 const DetachedTimestampFile = OpenTimestamps.DetachedTimestampFile;
 
 // Local dependecies
-const ConvertOTS = require('./src/libconvert.js');
+const ConvertOTS = require('./src/convert2ots.js');
 const Tools = require('./src/tools.js');
 
 // Parse parameters
