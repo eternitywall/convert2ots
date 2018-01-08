@@ -1,10 +1,10 @@
 {
   "name": "convert2ots",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "tap test.js && xo *.js"
+    "test": "tap src/test.js && xo src/*.js"
   },
   "author": "Eternity Wall",
   "license": "MIT",
