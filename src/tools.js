@@ -50,3 +50,23 @@ exports.hexToBytes = function (hex) {
   }
   return bytes;
 };
+
+exports.isHex = function (h) {
+    regexp = /^[0-9a-fA-F]+$/;
+    if (regexp.test(h))
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+exports.String2Hex = function (tmp) {
+    var str = '';
+    for(var i = 0; i < tmp.length; i++) {
+        str += tmp[i].charCodeAt(0).toString(16);
+    }
+    return str;
+}

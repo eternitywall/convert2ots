@@ -11,10 +11,10 @@ const Tools = require('./tools.js');
 // OpenTimestamps shortcuts
 // const Timestamp = OpenTimestamps.Timestamp;
 const Ops = OpenTimestamps.Ops;
+const Context = OpenTimestamps.Context;
+const DetachedTimestampFile = OpenTimestamps.DetachedTimestampFile;
 // Const Utils = OpenTimestamps.Utils;
 // Const Notary = OpenTimestamps.Notary;
-
-const url = 'examples/chainpoint.json';
 
 test('test validation merkle tree', assert => {
   const targetHash = 'bdf8c9bdf076d6aff0292a1c9448691d2ae283f2ce41b045355e2c8cb8e85ef2';
@@ -41,21 +41,6 @@ test('test validation merkle tree', assert => {
     // console.log("merkleRoot: " + merkleRoot);
 
   assert.equal(top, merkleRoot);
-  assert.end();
-});
-
-test('test migration', assert => {
-  const chainpoint = JSON.parse(fs.readFileSync(url, 'utf8'));
-  assert.true(chainpoint !== undefined);
-
-  const merkleRoot = ConvertOTS.calculateMerkleRoot(chainpoint.targetHash, chainpoint.proof);
-  assert.true(merkleRoot !== undefined);
-  assert.equal(merkleRoot, chainpoint.merkleRoot);
-
-  const timestamp = ConvertOTS.migrationMerkle(chainpoint.targetHash, chainpoint.proof);
-  assert.true(timestamp !== undefined);
-  assert.true(Tools.arrEq(timestamp.msg, Tools.hexToBytes(chainpoint.targetHash)));
-
   assert.end();
 });
 
@@ -115,4 +100,106 @@ test('merkle root of block', assert => {
     assert.true(Tools.arrEq(merkleTip.msg, merkleRoot));
     assert.end();
   });
+});
+/*
+test('chainpoint_v2', assert => {
+  const url = 'examples/chainpoint_v2.json';
+  const chainpoint = JSON.parse(fs.readFileSync(url, 'utf8'));
+  assert.true(chainpoint !== undefined);
+
+  const result = ConvertOTS.checkValidHeaderChainpoint2(chainpoint);
+  assert.true(result);
+
+  const merkleRoot = ConvertOTS.calculateMerkleRootChainpoint2(chainpoint.targetHash, chainpoint.proof);
+  assert.true(merkleRoot !== undefined);
+  assert.equal(merkleRoot, chainpoint.merkleRoot);
+
+  const timestamp = ConvertOTS.migrationChainpoint2(chainpoint.targetHash, chainpoint.proof);
+  assert.true(timestamp !== undefined);
+  assert.true(Tools.arrEq(timestamp.msg, Tools.hexToBytes(chainpoint.targetHash)));
+
+    // Add intermediate unknow attestation
+    try {
+        ConvertOTS.migrationAttestationsChainpoint2(chainpoint.anchors, timestamp);
+    } catch (err) {
+        assert.true(0);
+    }
+
+    // Resolve unknown attestations
+    const promises = [];
+    const stampsAttestations = timestamp.directlyVerified();
+    stampsAttestations.forEach(subStamp => {
+        subStamp.attestations.forEach(attestation => {
+            // Console.log('Find op_return: ' + Tools.bytesToHex(attestation.payload));
+            const txHash = Tools.bytesToHex(attestation.payload);
+            promises.push(ConvertOTS.resolveAttestation(txHash, subStamp, true));
+        });
+    });
+    // Callback with the full attestation
+    Promise.all(promises.map(Tools.hardFail))
+        .then(() => {
+            // Print attestations
+            const attestations = timestamp.getAttestations();
+            assert.true(attestations.size > 0);
+
+            // Deserialize
+            const detached = new DetachedTimestampFile(new Ops.OpSHA256(), timestamp);
+            const ctx = new Context.StreamSerialization();
+            detached.serialize(ctx);
+            assert.true( ctx.getOutput().length > 0);
+            assert.end();
+        })
+        .catch(err => {
+            assert.true(0);
+            assert.end(0);
+        });
+});
+*/
+
+test('chainpoint_v3', assert => {
+    const url = 'examples/chainpoint_v3.json';
+    const chainpoint = JSON.parse(fs.readFileSync(url, 'utf8'));
+    assert.true(chainpoint !== undefined);
+
+    const result = ConvertOTS.checkValidHeaderChainpoint3(chainpoint);
+    assert.true(result !== undefined);
+
+    var merkleRoot = {};
+    var calendarRoot = {};
+    chainpoint.branches.forEach(branch => {
+        if (branch.label === 'cal_anchor_branch') {
+            calendarRoot = ConvertOTS.calculateMerkleRootChainpoint3(chainpoint.hash, branch.ops);
+            assert.true(calendarRoot !== undefined);
+            branch.branches.forEach(subBranch => {
+                if (subBranch.label === 'btc_anchor_branch') {
+                    merkleRoot = ConvertOTS.calculateMerkleRootChainpoint3(calendarRoot, subBranch.ops);
+                    assert.true(merkleRoot !== undefined);
+                }
+            });
+        }
+    });
+    assert.true(merkleRoot !== undefined);
+    const merkleroot = "c617f5faca34474bea7020d75c39cb8427a32145f9646586ecb9184002131ad9";
+    assert.true( Tools.arrEq(Tools.hexToBytes(merkleroot).reverse(), Tools.hexToBytes(merkleRoot) ));
+
+    // migration
+    var timestampMerkleRoot = {};
+    var timestampCalRoot = {};
+    chainpoint.branches.forEach(branch => {
+        if (branch.label === 'cal_anchor_branch') {
+            timestampCalRoot = ConvertOTS.migrationChainpoint3(chainpoint.hash, branch.ops);
+            assert.true(timestampCalRoot !== undefined);
+            branch.branches.forEach(subBranch => {
+                if (subBranch.label === 'btc_anchor_branch') {
+                    timestampMerkleRoot = ConvertOTS.migrationChainpoint3(calendarRoot, subBranch.ops);
+                    assert.true(timestampMerkleRoot !== undefined);
+                }
+            });
+        }
+    });
+
+    ConvertOTS.concatTimestamp(timestampCalRoot, timestampMerkleRoot);
+
+    assert.end();
+
 });

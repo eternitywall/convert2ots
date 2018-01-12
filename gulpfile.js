@@ -41,7 +41,7 @@ gulp.task('index', () => {
   };
 
   return gulp.src('./')
-        .pipe(exec('./node_modules/browserify/bin/cmd.js -r ./src/convert2ots.js ./lib.js -o ./dist/convert2ots.es6.js', options))
+        .pipe(exec('./node_modules/browserify/bin/cmd.js -r ./src/convert2ots.js ./lib.js -o ./dist/convert2ots.es6.js -s convert2ots --insert-globals', options))
         .pipe(exec('./node_modules/babel-cli/bin/babel.js ./dist/convert2ots.es6.js -o ./dist/convert2ots.js', options))
         .pipe(exec.reporter(reportOptions));
 
