@@ -59,7 +59,7 @@ if (ConvertOTS.checkValidHeaderChainpoint2(chainpoint)) {
   console.log('Chainpoint v2 file format');
   console.log('File type: ' + chainpoint.type);
   console.log('Target hash: ' + chainpoint.targetHash);
-}else if (ConvertOTS.checkValidHeaderChainpoint3(chainpoint)) {
+} else if (ConvertOTS.checkValidHeaderChainpoint3(chainpoint)) {
   format = SupportedFormat.CHAINPOINTv3;
   console.log('Chainpoint v3 file format');
   console.log('File type: ' + chainpoint.type);
@@ -70,8 +70,8 @@ if (ConvertOTS.checkValidHeaderChainpoint2(chainpoint)) {
 }
 
 // Check and generate merkle tree
-var merkleRoot = {};
-var calendarRoot = {};
+let merkleRoot = {};
+let calendarRoot = {};
 
 if (format === SupportedFormat.CHAINPOINTv2) {
   merkleRoot = ConvertOTS.calculateMerkleRootChainpoint2(chainpoint.targetHash, chainpoint.proof);
@@ -80,21 +80,24 @@ if (format === SupportedFormat.CHAINPOINTv2) {
     process.exit(1);
   }
 } else if (format === SupportedFormat.CHAINPOINTv3) {
-    chainpoint.branches.forEach(branch => {
-        if (branch.label === 'cal_anchor_branch') {
-            calendarRoot = ConvertOTS.calculateMerkleRootChainpoint3(chainpoint.hash, branch.ops);
-            branch.branches.forEach(subBranch => {
-                if (subBranch.label === 'btc_anchor_branch') {
-                    merkleRoot = ConvertOTS.calculateMerkleRootChainpoint3(calendarRoot, subBranch.ops);
-                }
-            });
+  chainpoint.branches.forEach(branch => {
+    if (branch.label === 'cal_anchor_branch') {
+      calendarRoot = ConvertOTS.calculateMerkleRootChainpoint3(chainpoint.hash, branch.ops);
+      branch.branches.forEach(subBranch => {
+        if (subBranch.label === 'btc_anchor_branch') {
+          merkleRoot = ConvertOTS.calculateMerkleRootChainpoint3(calendarRoot, subBranch.ops);
         }
-    });
+      });
+    }
+  });
 }
 
-// Migrate proof to timestamp object
-let timestamp = {};
+// Check and migrate attestations of the proof
 if (format === SupportedFormat.CHAINPOINTv2) {
+    /* Chainpoint v2: the attestation is anchor to op_return of the transaction.
+     * In order to resolve the full attestation to the merkle root of the block
+     * we use a lite verification (with the insight) or bitcoin node. */
+  let timestamp = {};
   try {
     timestamp = ConvertOTS.migrationChainpoint2(chainpoint.targetHash, chainpoint.proof);
     if (timestamp === undefined) {
@@ -104,23 +107,6 @@ if (format === SupportedFormat.CHAINPOINTv2) {
     console.log('Building error: ' + err);
     process.exit(1);
   }
-} else if (format === SupportedFormat.CHAINPOINTv3) {
-  try {
-    // for chainpoint v3: 1 btc attestation is enought
-
-  } catch (err) {
-    console.log('Building error: ' + err);
-    process.exit(1);
-  }
-}
-// Console.log(timestamp.strTree(0, 1));
-
-// Check and migrate attestations of the proof
-if (format === SupportedFormat.CHAINPOINTv2) {
-    /* Chainpoint v2: the attestation is anchor to op_return of the transaction.
-     * In order to resolve the full attestation to the merkle root of the block
-     * we use a lite verification (with the insight) or bitcoin node. */
-
     // Add intermediate unknow attestation
   try {
     ConvertOTS.migrationAttestationsChainpoint2(chainpoint.anchors, timestamp);
@@ -160,34 +146,34 @@ if (format === SupportedFormat.CHAINPOINTv2) {
          * In order to resolve to check the merkle root of the block height,
          * we use a lite verification (with the insight) or bitcoin node. */
 
-    var timestampMerkleRoot = {};
-    var timestampCalRoot = {};
-    chainpoint.branches.forEach(branch => {
-        if (branch.label === 'cal_anchor_branch') {
-            timestampCalRoot = ConvertOTS.migrationChainpoint3(chainpoint.hash, branch.ops);
-            branch.branches.forEach(subBranch => {
-                if (subBranch.label === 'btc_anchor_branch') {
-                    timestampMerkleRoot = ConvertOTS.migrationChainpoint3(calendarRoot, subBranch.ops);
-                }
-            });
+  let timestampMerkleRoot = {};
+  let timestampCalRoot = {};
+  chainpoint.branches.forEach(branch => {
+    if (branch.label === 'cal_anchor_branch') {
+      timestampCalRoot = ConvertOTS.migrationChainpoint3(chainpoint.hash, branch.ops);
+      branch.branches.forEach(subBranch => {
+        if (subBranch.label === 'btc_anchor_branch') {
+          timestampMerkleRoot = ConvertOTS.migrationChainpoint3(calendarRoot, subBranch.ops);
         }
-    });
-    ConvertOTS.concatTimestamp(timestampCalRoot, timestampMerkleRoot);
-
+      });
+    }
+  });
+  // Concat temporany calendar proof with bitcoin merkle proof
+  ConvertOTS.concatTimestamp(timestampCalRoot, timestampMerkleRoot);
 
     // Print attestations
-    const attestations = timestampCalRoot.getAttestations();
-    attestations.forEach(attestation => {
-        console.log('OTS attestation: ' + attestation.toString());
-    });
+  const attestations = timestampCalRoot.getAttestations();
+  attestations.forEach(attestation => {
+    console.log('OTS attestation: ' + attestation.toString());
+  });
 
     // Store to file
-    try {
-        saveTimestamp(otsFile, timestampCalRoot);
-    } catch (err) {
-        console.log('Saving ots error');
-        process.exit(1);
-    }
+  try {
+    saveTimestamp(otsFile, timestampCalRoot);
+  } catch (err) {
+    console.log('Saving ots error');
+    process.exit(1);
+  }
 }
 
 // Save ots file

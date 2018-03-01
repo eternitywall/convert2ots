@@ -52,21 +52,18 @@ exports.hexToBytes = function (hex) {
 };
 
 exports.isHex = function (h) {
-    regexp = /^[0-9a-fA-F]+$/;
-    if (regexp.test(h))
-    {
-        return true;
-    }
-    else
-    {
-        return false;
-    }
-}
+  const regexp = /^[0-9a-fA-F]+$/;
+  if (regexp.test(h)) {
+    return true;
+  }
+
+  return false;
+};
 
 exports.String2Hex = function (tmp) {
-    var str = '';
-    for(var i = 0; i < tmp.length; i++) {
-        str += tmp[i].charCodeAt(0).toString(16);
-    }
-    return str;
-}
+  let str = '';
+  for (let i = 0; i < tmp.length; i++) {
+    str += tmp[i].charCodeAt(0).toString(16);
+  }
+  return str;
+};

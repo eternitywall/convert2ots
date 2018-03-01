@@ -315,13 +315,11 @@ module.exports = {
 
 // Proof functions for Chainpoint v3
   calculateMerkleRootChainpoint3(targetHash, ops) {
-    let left;
-    let right;
     let prev = targetHash;
 
     for (let i = 0; i < ops.length; i++) {
       const item = ops[i];
-      var result = "";
+      let result = '';
       if (item.l !== undefined) {
         const string = Tools.isHex(item.l) ? item.l : Tools.String2Hex(item.l);
         result = string + prev;
@@ -334,60 +332,62 @@ module.exports = {
         result = crypto.createHash('sha256').update(Tools.hexToString(prev)).digest('hex');
         prev = result;
       } else if (item.op !== undefined && item.op === 'sha-256-x2') {
-          const resultX1 = crypto.createHash('sha256').update(Tools.hexToString(prev)).digest('hex');
-          result = crypto.createHash('sha256').update(Tools.hexToString(resultX1)).digest('hex');
-          prev = result;
+        const resultX1 = crypto.createHash('sha256').update(Tools.hexToString(prev)).digest('hex');
+        result = crypto.createHash('sha256').update(Tools.hexToString(resultX1)).digest('hex');
+        prev = result;
       }
-  }
-  return prev;
- },
-
-
-
-    migrationChainpoint3(targetHash, ops) {
-        let timestamp = new Timestamp(Tools.hexToBytes(targetHash));
-        const tip = timestamp;
-        const self = this;
-
-        for (let i = 0; i < ops.length; i++) {
-            const item = ops[i];
-            let op;
-            if (item.l !== undefined) {
-                const string = Tools.isHex(item.l) ? item.l : Tools.String2Hex(item.l);
-                op = new Ops.OpPrepend(Tools.hexToBytes(string));
-                timestamp = timestamp.add(op);
-            } else if (item.r !== undefined) {
-                const string = Tools.isHex(item.r) ? item.r : Tools.String2Hex(item.r);
-                op = new Ops.OpAppend(Tools.hexToBytes(string));
-                timestamp = timestamp.add(op);
-            } else if (item.op !== undefined && item.op === 'sha-256') {
-                op = new Ops.OpSHA256();
-                timestamp = timestamp.add(op);
-            } else if (item.op !== undefined && item.op === 'sha-256-x2') {
-                op = new Ops.OpSHA256();
-                timestamp = timestamp.add(op);
-                op = new Ops.OpSHA256();
-                timestamp = timestamp.add(op);
-            } else if (item.anchors !== undefined) {
-                item.anchors.forEach(anchor=>{
-                  if( anchor.type === "btc"){
-                      const attestation = new Notary.BitcoinBlockHeaderAttestation(parseInt(anchor.anchor_id));
-                      self.addAttestation(timestamp, attestation);
-                  }
-                });
-            }
-        }
-        return tip;
-    },
-
-    concatTimestamp(timestamp, appended) {
-        if (timestamp.ops.size === 0) {
-            timestamp.ops = appended.ops;
-            return true;
-        }
-
-        timestamp.ops.forEach(stamp => {
-            this.concatTimestamp(stamp, appended);
-        });
     }
+    return prev;
+  },
+
+  migrationChainpoint3(targetHash, ops) {
+    let timestamp = new Timestamp(Tools.hexToBytes(targetHash));
+    const tip = timestamp;
+    const self = this;
+
+    function makeAttestations(anchors) {
+      anchors.forEach(anchor => {
+        if (anchor.type === 'btc') {
+          const attestation = new Notary.BitcoinBlockHeaderAttestation(parseInt(anchor.anchor_id, 10));
+          self.addAttestation(timestamp, attestation);
+        }
+      });
+    }
+
+    for (let i = 0; i < ops.length; i++) {
+      const item = ops[i];
+      let op;
+      if (item.l !== undefined) {
+        const string = Tools.isHex(item.l) ? item.l : Tools.String2Hex(item.l);
+        op = new Ops.OpPrepend(Tools.hexToBytes(string));
+        timestamp = timestamp.add(op);
+      } else if (item.r !== undefined) {
+        const string = Tools.isHex(item.r) ? item.r : Tools.String2Hex(item.r);
+        op = new Ops.OpAppend(Tools.hexToBytes(string));
+        timestamp = timestamp.add(op);
+      } else if (item.op !== undefined && item.op === 'sha-256') {
+        op = new Ops.OpSHA256();
+        timestamp = timestamp.add(op);
+      } else if (item.op !== undefined && item.op === 'sha-256-x2') {
+        op = new Ops.OpSHA256();
+        timestamp = timestamp.add(op);
+        op = new Ops.OpSHA256();
+        timestamp = timestamp.add(op);
+      } else if (item.anchors !== undefined) {
+        makeAttestations(item.anchors);
+      }
+    }
+    return tip;
+  },
+
+  concatTimestamp(timestamp, appended) {
+    if (timestamp.ops.size === 0) {
+      timestamp.ops = appended.ops;
+      return true;
+    }
+
+    timestamp.ops.forEach(stamp => {
+      this.concatTimestamp(stamp, appended);
+    });
+  }
 };

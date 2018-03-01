@@ -11,8 +11,8 @@ const Tools = require('./tools.js');
 // OpenTimestamps shortcuts
 // const Timestamp = OpenTimestamps.Timestamp;
 const Ops = OpenTimestamps.Ops;
-const Context = OpenTimestamps.Context;
-const DetachedTimestampFile = OpenTimestamps.DetachedTimestampFile;
+// const Context = OpenTimestamps.Context;
+// const DetachedTimestampFile = OpenTimestamps.DetachedTimestampFile;
 // Const Utils = OpenTimestamps.Utils;
 // Const Notary = OpenTimestamps.Notary;
 
@@ -157,49 +157,48 @@ test('chainpoint_v2', assert => {
 */
 
 test('chainpoint_v3', assert => {
-    const url = 'examples/chainpoint_v3.json';
-    const chainpoint = JSON.parse(fs.readFileSync(url, 'utf8'));
-    assert.true(chainpoint !== undefined);
+  const url = 'examples/chainpoint_v3.json';
+  const chainpoint = JSON.parse(fs.readFileSync(url, 'utf8'));
+  assert.true(chainpoint !== undefined);
 
-    const result = ConvertOTS.checkValidHeaderChainpoint3(chainpoint);
-    assert.true(result !== undefined);
+  const result = ConvertOTS.checkValidHeaderChainpoint3(chainpoint);
+  assert.true(result !== undefined);
 
-    var merkleRoot = {};
-    var calendarRoot = {};
-    chainpoint.branches.forEach(branch => {
-        if (branch.label === 'cal_anchor_branch') {
-            calendarRoot = ConvertOTS.calculateMerkleRootChainpoint3(chainpoint.hash, branch.ops);
-            assert.true(calendarRoot !== undefined);
-            branch.branches.forEach(subBranch => {
-                if (subBranch.label === 'btc_anchor_branch') {
-                    merkleRoot = ConvertOTS.calculateMerkleRootChainpoint3(calendarRoot, subBranch.ops);
-                    assert.true(merkleRoot !== undefined);
-                }
-            });
+  let merkleRoot = {};
+  let calendarRoot = {};
+  chainpoint.branches.forEach(branch => {
+    if (branch.label === 'cal_anchor_branch') {
+      calendarRoot = ConvertOTS.calculateMerkleRootChainpoint3(chainpoint.hash, branch.ops);
+      assert.true(calendarRoot !== undefined);
+      branch.branches.forEach(subBranch => {
+        if (subBranch.label === 'btc_anchor_branch') {
+          merkleRoot = ConvertOTS.calculateMerkleRootChainpoint3(calendarRoot, subBranch.ops);
+          assert.true(merkleRoot !== undefined);
         }
-    });
-    assert.true(merkleRoot !== undefined);
-    const merkleroot = "c617f5faca34474bea7020d75c39cb8427a32145f9646586ecb9184002131ad9";
-    assert.true( Tools.arrEq(Tools.hexToBytes(merkleroot).reverse(), Tools.hexToBytes(merkleRoot) ));
+      });
+    }
+  });
+  assert.true(merkleRoot !== undefined);
+  const merkleroot = 'c617f5faca34474bea7020d75c39cb8427a32145f9646586ecb9184002131ad9';
+  assert.true(Tools.arrEq(Tools.hexToBytes(merkleroot).reverse(), Tools.hexToBytes(merkleRoot)));
 
     // migration
-    var timestampMerkleRoot = {};
-    var timestampCalRoot = {};
-    chainpoint.branches.forEach(branch => {
-        if (branch.label === 'cal_anchor_branch') {
-            timestampCalRoot = ConvertOTS.migrationChainpoint3(chainpoint.hash, branch.ops);
-            assert.true(timestampCalRoot !== undefined);
-            branch.branches.forEach(subBranch => {
-                if (subBranch.label === 'btc_anchor_branch') {
-                    timestampMerkleRoot = ConvertOTS.migrationChainpoint3(calendarRoot, subBranch.ops);
-                    assert.true(timestampMerkleRoot !== undefined);
-                }
-            });
+  let timestampMerkleRoot = {};
+  let timestampCalRoot = {};
+  chainpoint.branches.forEach(branch => {
+    if (branch.label === 'cal_anchor_branch') {
+      timestampCalRoot = ConvertOTS.migrationChainpoint3(chainpoint.hash, branch.ops);
+      assert.true(timestampCalRoot !== undefined);
+      branch.branches.forEach(subBranch => {
+        if (subBranch.label === 'btc_anchor_branch') {
+          timestampMerkleRoot = ConvertOTS.migrationChainpoint3(calendarRoot, subBranch.ops);
+          assert.true(timestampMerkleRoot !== undefined);
         }
-    });
+      });
+    }
+  });
 
-    ConvertOTS.concatTimestamp(timestampCalRoot, timestampMerkleRoot);
+  ConvertOTS.concatTimestamp(timestampCalRoot, timestampMerkleRoot);
 
-    assert.end();
-
+  assert.end();
 });
