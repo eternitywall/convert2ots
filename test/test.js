@@ -4,9 +4,9 @@ const fs = require('fs');
 const crypto = require('crypto');
 const test = require('tape');
 const OpenTimestamps = require('javascript-opentimestamps');
-const ConvertOTS = require('./convert2ots.js');
-const Insight = require('./insight.js');
-const Tools = require('./tools.js');
+const ConvertOTS = require('../src/convert2ots.js');
+const Insight = require('../src/insight.js');
+const Tools = require('../src/tools.js');
 
 // OpenTimestamps shortcuts
 // const Timestamp = OpenTimestamps.Timestamp;

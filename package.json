@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "tap src/test.js && xo src/*.js"
+    "test": "sh ./test/test.sh && tap test/test.js && xo src/*.js"
   },
   "author": "Eternity Wall",
   "license": "MIT",
