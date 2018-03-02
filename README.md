@@ -1,7 +1,9 @@
-## convert2ots [![Build Status](https://travis-ci.org/eternitywall/convert2ots.svg?branch=master)](https://travis-ci.org/eternitywall/convert2ots)
-Convert bitcoin timestamp proof ( like Chainpoint v2 ) to OpenTimestamps proof.
+convert2ots [![Build Status](https://travis-ci.org/eternitywall/convert2ots.svg?branch=master)](https://travis-ci.org/eternitywall/convert2ots)
+===
+Convert bitcoin timestamp receipt ( like Chainpoint v2 or Chainpoint v3 ) to OpenTimestamps proof.
+It is a based on the python implementation at [OpenTimestamps Python client](https://github.com/opentimestamps/opentimestamps-client) and [OpenTimestamps Javascript library](https://github.com/opentimestamps/javascript-opentimestamps).
 
-## Installation
+## Install
 
 You need node and npm installed then proceed
 
@@ -11,45 +13,21 @@ cd convert2ots
 npm install
 ```
 
-## Example
-Chainpoint valid receipt from [https://github.com/chainpoint/chainpoint-validate-js](https://github.com/chainpoint/chainpoint-validate-js) and save to receipt.json
-```json
-{
- "@context": "https://w3id.org/chainpoint/v2",
- "type": "ChainpointSHA256v2",
- "targetHash": "bdf8c9bdf076d6aff0292a1c9448691d2ae283f2ce41b045355e2c8cb8e85ef2",
- "merkleRoot": "51296468ea48ddbcc546abb85b935c73058fd8acdb0b953da6aa1ae966581a7a",
- "proof": [
-   {
-     "left": "bdf8c9bdf076d6aff0292a1c9448691d2ae283f2ce41b045355e2c8cb8e85ef2"
-   },
-   {
-     "left": "cb0dbbedb5ec5363e39be9fc43f56f321e1572cfcf304d26fc67cb6ea2e49faf"
-   },
-   {
-     "right": "cb0dbbedb5ec5363e39be9fc43f56f321e1572cfcf304d26fc67cb6ea2e49faf"
-   }
- ],
- "anchors": [
-   {
-     "type": "BTCOpReturn",
-     "sourceId": "f3be82fe1b5d8f18e009cb9a491781289d2e01678311fe2b2e4e84381aafadee"
-   }
- ]
-}
-```
-Run conversion tool to generate receipt.ots
+## Convert receipt
+1. Get a (chainpoint v2)[https://raw.githubusercontent.com/eternitywall/convert2ots/master/examples/chainpoint_v2.json] or (chainpoint v3)[https://raw.githubusercontent.com/eternitywall/convert2ots/master/examples/chainpoint_v3.json] receipt and save to `receipt.json` file.
+2. Run conversion tool to generate `receipt.ots`
 ```
 $ node index.js --chainpoint examples/chainpoint.json --output receipt.ots
 ```
-The default behaviour check and use the local Bitcoin node. 
-If it is not available or connection failure, 
-the lite-verification process use multi insight block explorer instead local Bitcoin node.
-To force to use lite-verification specify --nobitcoin option.
+3. The default behaviour check and use the local Bitcoin node. 
+Otherwise, lite-verification process uses multi insight block explorer instead local Bitcoin node.
+To force to use lite-verification specify `--nobitcoin` option.
 ```
 $ node index.js --chainpoint examples/chainpoint.json --output receipt.ots --nobitcoin
 ```
-OpenTimestamp proof info receipt.ots
+
+## Check and verify OTS receipt
+Install [OpenTimestamps Python client](https://github.com/opentimestamps/opentimestamps-client) to check the `receipt.ots` as the follow
 ```
 $ ots -v info receipt.ots 
 File sha256 hash: bdf8c9bdf076d6aff0292a1c9448691d2ae283f2ce41b045355e2c8cb8e85ef2
@@ -108,14 +86,8 @@ OpenTimestamp proof info receipt.ots on [web visualizer](https://opentimestamps.
 ```
 https://opentimestamps.org/info.html?ots=004f70656e54696d657374616d7073000050726f6f6600bf89e2e884e892940108bdf8c9bdf076d6aff0292a1c9448691d2ae283f2ce41b045355e2c8cb8e85ef2f120bdf8c9bdf076d6aff0292a1c9448691d2ae283f2ce41b045355e2c8cb8e85ef208f120cb0dbbedb5ec5363e39be9fc43f56f321e1572cfcf304d26fc67cb6ea2e49faf08f020cb0dbbedb5ec5363e39be9fc43f56f321e1572cfcf304d26fc67cb6ea2e49faf08f1a50101000000015cd30d6bc9b8e7a92d97e011b356b09cf7306a331c8ad63605dee4776c144c9d010000006b48304502210096811a70446463269e5d258267777f1b1e8ffe9c1965866bfd1a6c0250777c9c022049b5004a006e181fc92314ede95f3761a86831c5f99937465d99de6d14388b870121035b690114679d44d75b75aa170e34596c94c778f589bcb9063b0e4e293fcacd1dffffffff020000000000000000226a20f026cd996e00000000001976a9147003cc5915f6c23fd512b38daeeecfdde7a587e988ac000000000808f1209f0b3ab380760f32613d1757c35ebf55e8fdaf9f2c2cbe3c56aa00fe5f743eb00808f12082edea6ac21093305e010b9bb57816964cbe1865a70d5ff1e48719d4928b08f80808f12065b3153ec014e07340762af60947e795a46e96f4383e326fd553a3d03a4fbb570808f020ca7a9cdfbf53b561f97cf8cfcd28441fdd891304d27ec0316077574b9a22dbdb0808f12097e12d7ad3afcb3f7f1e8f0992755a24c434becb4e044685069cd645fa26bd270808f020b559e1be99b73799e43d8c3f806cafe0a15261a219c197b49ab5a28149d34cc30808f120da7d4268e745b85973740b40ffb71178e7dc34cccd0e87da5d9ac6a92bbf50b10808f02038c206d73c5cd3d1188d6b5c1000d6d0c6dbad12f272b131cd0670855730edbc0808f0208b08935599f2385da266d416aaaf0ba463c7b7f9e3f64af0a1a969a262a8abb50808f0205653963194dfae298f7f1bb4fd71c82d8616a29654fd59b861dce16e1d25bf350808f0206fae019dce8a88c1c3264ceda7d146427d03fa01df475deaa1f8964d209f3f500808f120bc7ffe58232456f8575de252f84feb723aac3bc1a701a90132cab08bf0d446c00808000588960d73d7190103bfdc19
 ```
-
-#### Verify with OpenTimestamps compatible client
-
-Install [OpenTimestamps Python client](https://github.com/opentimestamps/opentimestamps-client)
-
-Then:
-
-```
+Verify with [OpenTimestamps Python client](https://github.com/opentimestamps/opentimestamps-client)
+```bash
 $ ots verify -d bdf8c9bdf076d6aff0292a1c9448691d2ae283f2ce41b045355e2c8cb8e85ef2 receipt.ots
 Success! Bitcoin attests data existed as of Tue Jul 19 19:26:57 2016 CEST
 ```
