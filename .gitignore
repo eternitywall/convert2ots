@@ -2,3 +2,5 @@ out.ots
 node_modules
 .idea
 package-lock.json
+web
+dist

@@ -9,7 +9,7 @@
 
 const requestPromise = require('request-promise');
 const Promise = require('promise');
-const ConvertOTS = require('./libconvert.js');
+const Tools = require('./tools.js');
 
 /** Class used to query Insight API */
 class Insight {
@@ -208,7 +208,7 @@ class MultiInsight {
       res.push(insight.blockhash(height));
     });
     return new Promise((resolve, reject) => {
-      Promise.all(res.map(ConvertOTS.softFail)).then(results => {
+      Promise.all(res.map(Tools.softFail)).then(results => {
         // Console.log('results=' + results);
         const set = new Set();
         let found = false;
@@ -235,7 +235,7 @@ class MultiInsight {
       res.push(insight.block(hash));
     });
     return new Promise((resolve, reject) => {
-      Promise.all(res.map(ConvertOTS.softFail)).then(results => {
+      Promise.all(res.map(Tools.softFail)).then(results => {
         // Console.log('results=' + results);
         const resultSet = new Set();
         let found = false;
@@ -262,7 +262,7 @@ class MultiInsight {
       res.push(insight.tx(hash));
     });
     return new Promise((resolve, reject) => {
-      Promise.all(res.map(ConvertOTS.softFail)).then(results => {
+      Promise.all(res.map(Tools.softFail)).then(results => {
                 // Console.log('results=' + results);
         const resultSet = new Set();
         let found = false;
@@ -289,7 +289,7 @@ class MultiInsight {
       res.push(insight.rawtx(hash));
     });
     return new Promise((resolve, reject) => {
-      Promise.all(res.map(ConvertOTS.softFail)).then(results => {
+      Promise.all(res.map(Tools.softFail)).then(results => {
                 // Console.log('results=' + results);
         const resultSet = new Set();
         let found = false;
